@@ -11,8 +11,6 @@ Pricing is now available for vanilla options based on Black-Scholes or Monte-Car
 """
 
 from sys import path as sys_path
-sys_path.append("{}/..".format(sys_path[0]))
-
 from PyQt5.QtCore import QRect, Qt
 from PyQt5.QtWidgets import QApplication, QFileDialog, QHBoxLayout, QMainWindow, QMenu, QMessageBox, QPushButton
 from PyQt5.QtWidgets import QVBoxLayout, QWidget
@@ -29,6 +27,7 @@ from json import dumps, loads
 from numpy import array
 from sys import argv as sys_argv, exit as sys_exit
 
+sys_path.append("{}/..".format(sys_path[0]))
 
 btn_group = [
     [

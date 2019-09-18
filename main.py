@@ -9,6 +9,6 @@ if __name__ == '__main__':
     app = QApplication(sys_argv)
     main = ApplicationWindow()
     qtdark(app)
-    mw = ModernWindow(main)
-    mw.show()
+    window_main = ModernWindow(main)
+    window_main.show()
     sys_exit(app.exec_())

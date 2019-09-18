@@ -21,8 +21,8 @@ class Option(Instrument):
 
     def __init__(self, inst_dict_):
         super(Option, self).__init__(inst_dict_)
-        self.strike = inst_dict_.get(InstParam.OptionStrike.value)
-        self.maturity = inst_dict_.get(InstParam.OptionMaturity.value)
+        self.strike = inst_dict_[InstParam.OptionStrike.value]
+        self.maturity = inst_dict_[InstParam.OptionMaturity.value]
 
     def __str__(self):
         return "{} * {} {}, Maturity {}".format(self.unit, self.strike, self.type, self.maturity)
@@ -46,11 +46,7 @@ class Option(Instrument):
 
         elif _method == EngineMethod.MC.value:
             from utils.monte_carlo import MonteCarlo
-            _iteration = _param.get(EngineParam.MCIteration.value)
-            if not _iteration:
-                raise ValueError("iteration not specified")
-            if not isinstance(_iteration, int):
-                raise ValueError("type <int> is required for iteration, not {}".format(type(_iteration)))
+            _iteration = self._check_iter(_param[EngineParam.MCIteration.value])
             _spot = MonteCarlo.stock_price(_iteration, isp=_spot, rate=_rate, div=_div, vol=_vol, t=_t)
             _price = [max(_sign * (_s - _strike), 0) for _s in _spot]
             return average(_price) * exp(-_rate * _t) * _unit
@@ -66,11 +62,7 @@ class Option(Instrument):
 
         elif _method == EngineMethod.MC.value:
             from utils.monte_carlo import MonteCarlo
-            _iteration = _param.get(EngineParam.MCIteration.value)
-            if not _iteration:
-                raise ValueError("iteration not specified")
-            if not isinstance(_iteration, int):
-                raise ValueError("type <int> is required for iteration, not {}".format(type(_iteration)))
+            _iteration = self._check_iter(_param[EngineParam.MCIteration.value])
             _spot = MonteCarlo.stock_price(_iteration, isp=_spot, rate=_rate, div=_div, vol=_vol, t=_t)
             _step = 0.01
             _delta = [(max(_sign * (_s + _step - _strike), 0) - max(_sign * (_s - _step - _strike), 0)) /
@@ -88,11 +80,7 @@ class Option(Instrument):
 
         elif _method == EngineMethod.MC.value:
             from utils.monte_carlo import MonteCarlo
-            _iteration = _param.get(EngineParam.MCIteration.value)
-            if not _iteration:
-                raise ValueError("iteration not specified")
-            if not isinstance(_iteration, int):
-                raise ValueError("type <int> is required for iteration, not {}".format(type(_iteration)))
+            _iteration = self._check_iter(_param[EngineParam.MCIteration.value])
             _spot = MonteCarlo.stock_price(_iteration, isp=_spot, rate=_rate, div=_div, vol=_vol, t=_t)
             _step = 0.01
             _gamma = [((max(_sign * (_s + 2 * _step - _strike), 0) - max(_sign * (_s - _strike), 0)) -
@@ -151,6 +139,15 @@ class Option(Instrument):
         _param = engine_.get('param', {})
         return _method, _param
 
+    @staticmethod
+    def _check_iter(iter_num):
+        if not iter_num:
+            raise ValueError("iteration not specified")
+        if not isinstance(iter_num, int):
+            raise ValueError("type <int> is required for iteration, not {}".format(type(iter_num)))
+
+        return iter_num
+
     def _prepare_risk_data(self, mkt_dict_, engine_):
         _load_param = [EnvParam.RiskFreeRate.value, EnvParam.UdSpotForPrice.value, EnvParam.UdVolatility.value,
                        EnvParam.UdDivYieldRatio.value]
@@ -161,47 +158,49 @@ class Option(Instrument):
 
 
 if __name__ == '__main__':
-    import sys
+    pass
 
-    from personal_utils.logger_utils import get_default_logger
-    from personal_utils.time_utils import Timer
-
-    logger = get_default_logger("option pricing test")
-
-    callput = InstType.CallOption.value
-    strike = 80
-    spot = 100
-    maturity = 1
-    rate = 2
-    vol = 5
-    iteration = 1000000
-
-    inst_1 = {
-        InstParam.InstType.value: callput,
-        InstParam.OptionStrike.value: strike,
-        InstParam.OptionMaturity.value: maturity
-    }
-
-    mkt = {
-        EnvParam.RiskFreeRate.value: rate,
-        EnvParam.UdVolatility.value: vol
-    }
-
-    engine_1 = dict(engine=EngineMethod.BS.value)
-    engine_2 = dict(engine=EngineMethod.MC.value, param={EngineParam.MCIteration.value: iteration})
-
-    option_1 = Instrument.get_inst(inst_1)
-
-    _timer = Timer("option pricing: {} {}, {} years, rate {}%, vol {}%".format(
-        strike, "call" if callput == InstType.CallOption.value else "put", maturity, rate, vol), logger, rounding_=6)
-    price_bs = round(option_1.pv(mkt, engine_1), 6)
-    logger.info("price = {} (Black-Scholes)".format(price_bs))
-    _timer.mark("pricing using Black-Scholes")
-    price_mc = round(option_1.pv(mkt, engine_2), 6)
-    logger.info("price = {} (Monte-Carlo, {} iteration)".format(price_mc, iteration))
-    _timer.mark("pricing using Monte-Carlo with {} iteration".format(iteration))
-    _timer.close()
-
-    option_1.price = price_bs
-    option_1.unit = 1
-    logger.info("option payoff at spot {}: {}".format(spot, round(option_1.payoff(spot), 6)))
+    # import sys
+    #
+    # from personal_utils.logger_utils import get_default_logger
+    # from personal_utils.time_utils import Timer
+    #
+    # logger = get_default_logger("option pricing test")
+    #
+    # callput = InstType.CallOption.value
+    # strike = 80
+    # spot = 100
+    # maturity = 1
+    # rate = 2
+    # vol = 5
+    # iteration = 1000000
+    #
+    # inst_1 = {
+    #     InstParam.InstType.value: callput,
+    #     InstParam.OptionStrike.value: strike,
+    #     InstParam.OptionMaturity.value: maturity
+    # }
+    #
+    # mkt = {
+    #     EnvParam.RiskFreeRate.value: rate,
+    #     EnvParam.UdVolatility.value: vol
+    # }
+    #
+    # engine_1 = dict(engine=EngineMethod.BS.value)
+    # engine_2 = dict(engine=EngineMethod.MC.value, param={EngineParam.MCIteration.value: iteration})
+    #
+    # option_1 = Instrument.get_inst(inst_1)
+    #
+    # _timer = Timer("option pricing: {} {}, {} years, rate {}%, vol {}%".format(
+    #     strike, "call" if callput == InstType.CallOption.value else "put", maturity, rate, vol), logger, rounding_=6)
+    # price_bs = round(option_1.pv(mkt, engine_1), 6)
+    # logger.info("price = {} (Black-Scholes)".format(price_bs))
+    # _timer.mark("pricing using Black-Scholes")
+    # price_mc = round(option_1.pv(mkt, engine_2), 6)
+    # logger.info("price = {} (Monte-Carlo, {} iteration)".format(price_mc, iteration))
+    # _timer.mark("pricing using Monte-Carlo with {} iteration".format(iteration))
+    # _timer.close()
+    #
+    # option_1.price = price_bs
+    # option_1.unit = 1
+    # logger.info("option payoff at spot {}: {}".format(spot, round(option_1.payoff(spot), 6)))
